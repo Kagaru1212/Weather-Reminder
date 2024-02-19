@@ -31,6 +31,7 @@ class WeatherApiUpdate(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Subscribing.objects.all()
     serializer_class = WeatherSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_update(self, serializer):
         serializer.save()
