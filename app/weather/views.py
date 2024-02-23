@@ -34,22 +34,8 @@ class WeatherApiUpdate(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Subscribing.objects.all()
     serializer_class = WeatherSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_update(self, serializer):
         serializer.save()
-
-
-def get_weather(request, city_name):
-    appid = '6dabbdf16a4a011fc0e41ae5cb097de4'
-    url = 'https://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid=' + appid
-
-    res = requests.get(url.format(city_name)).json()
-
-    city_info = {
-        'city': city_name,
-        'temp': res['main']['temp'],
-        'humidity': res['main']['humidity'],
-    }
-
-    return JsonResponse(city_info)
 

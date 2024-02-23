@@ -185,7 +185,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',  # Установите уровень, который включает INFO
+        'level': 'INFO',
     },
 }
 
