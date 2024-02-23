@@ -159,9 +159,33 @@ CACHES = {
 
 CELERY_CACHE_BACKEND = 'default'
 
-CELERY_BEAT_SCHEDULE = {
-    'update-weather-periodically': {
-        'task': 'weather.tasks.test_task',
-        'schedule': 300,
+# CELERY_BEAT_SCHEDULE = {
+#     'update-weather-periodically': {
+#         'task': 'weather.tasks.send_weather',
+#         'schedule': 300,
+#     },
+# }
+
+
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'pensana32@gmail.com'
+EMAIL_HOST_PASSWORD = 'http://localhost:8000/'
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',  # Установите уровень, который включает INFO
     },
 }
+
