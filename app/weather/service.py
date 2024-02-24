@@ -1,6 +1,8 @@
 import requests
 from django.core.mail import send_mail
 
+from WeatherReminder import settings
+
 
 def send(user_email, city_name):
     appid = '6dabbdf16a4a011fc0e41ae5cb097de4'
@@ -13,4 +15,9 @@ def send(user_email, city_name):
         'temp': res['main']['temp'],
         'humidity': res['main']['humidity'],
     }
-    send_mail(f"You've signed up for {city_name}", city_info, 'djangositetest1@gmail.com', [user_email], fail_silently=False)
+    message_body = f"You've signed up for {city_name}. Temperature: {city_info['temp']}, Humidity: {city_info['humidity']}"
+
+    send_mail(f"You've signed up for {city_name}", message_body, settings.EMAIL_HOST_USER, [user_email],
+              fail_silently=False)
+
+
