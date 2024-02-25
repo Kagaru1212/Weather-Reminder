@@ -159,13 +159,6 @@ CACHES = {
 
 CELERY_CACHE_BACKEND = 'default'
 
-# CELERY_BEAT_SCHEDULE = {
-#     'update-weather-periodically': {
-#         'task': 'weather.tasks.send_weather',
-#         'schedule': 300,
-#     },
-# }
-
 
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

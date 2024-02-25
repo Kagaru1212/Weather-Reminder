@@ -33,7 +33,9 @@ services:
     build: ./app
     env_file:
       - .env.dev
-    command: celery -A WeatherReminder beat --loglevel=info
+    command: celery -A WeatherReminder beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      - pgdb
 
   pgdb:
     image: postgres:latest

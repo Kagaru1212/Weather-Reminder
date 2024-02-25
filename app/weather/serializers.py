@@ -1,9 +1,11 @@
 import requests
 from rest_framework import serializers
 
+from WeatherReminder.celery import app
 from weather.models import Subscribing
 from weather.tasks import send_weather
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +13,7 @@ logger = logging.getLogger(__name__)
 class WeatherSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     city_name = serializers.CharField(max_length=255, required=False)
+    notification = serializers.IntegerField()
 
     class Meta:
         model = Subscribing
@@ -19,15 +22,20 @@ class WeatherSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         city_name = validated_data.get('city_name')
+        notification = validated_data.get('notification', '')
+        schedule_key = f'send-weather-every-{notification}-minutes'
 
         # Проверка наличия города в стороннем API
         if self.is_valid_city(city_name):
             subscribing_instance = Subscribing(user=user, **validated_data)
             subscribing_instance.save()
 
-            send_weather.delay(user.email, city_name)
-
             logger.info(f'Sending weather task for user {user.email} and city {city_name}')
+
+            if schedule_key in app.conf.beat_schedule:
+                send_weather.apply_async(args=[user.email, city_name], **app.conf.beat_schedule[schedule_key])
+            else:
+                logger.warning(f'Schedule key {schedule_key} not found in beat_schedule.')
 
             return subscribing_instance
         else:
@@ -45,3 +53,8 @@ class WeatherSerializer(serializers.ModelSerializer):
 
         response = requests.get(url)
         return response.status_code == 200
+
+    def validate_notification(self, value):
+        if value not in [3, 6, 12]:
+            raise serializers.ValidationError("Notification value should be 3, 6, or 12")
+        return value
