@@ -9,18 +9,13 @@ from .models import Subscribing
 from .serializers import WeatherSerializer
 
 
-class WeatherApiView(generics.ListCreateAPIView):
-    """
-    This class is responsible for creating and reading subscription data.
-    Roughly speaking the implementation of methods (GET, POST).
-    Also, the GET of this class returns all existing subscriptions.
-    """
-    queryset = Subscribing.objects.all()
+class SubscribingApiViewSet(viewsets.ModelViewSet):
     serializer_class = WeatherSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_serializer_context(self):
-        return {'request': self.request}
+    def get_queryset(self):
+        # Return only the subscriptions of the current user
+        return Subscribing.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save()
