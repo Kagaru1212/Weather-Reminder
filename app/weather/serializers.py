@@ -1,9 +1,10 @@
+import json
+
 import requests
 from rest_framework import serializers
 
-from WeatherReminder.celery import app
 from weather.models import Subscribing
-from weather.tasks import send_weather
+from django_celery_beat.models import PeriodicTask, IntervalSchedule
 import logging
 
 
@@ -22,8 +23,7 @@ class WeatherSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         city_name = validated_data.get('city_name')
-        notification = validated_data.get('notification', '')
-        schedule_key = f'send-weather-every-{notification}-minutes'
+        notification = int(validated_data.get('notification', ''))
 
         # Проверка наличия города в стороннем API
         if self.is_valid_city(city_name):
@@ -32,10 +32,19 @@ class WeatherSerializer(serializers.ModelSerializer):
 
             logger.info(f'Sending weather task for user {user.email} and city {city_name}')
 
-            if schedule_key in app.conf.beat_schedule:
-                send_weather.apply_async(args=[user.email, city_name], **app.conf.beat_schedule[schedule_key])
+            if notification == 3:
+                schedule = IntervalSchedule.objects.create(every=180, period=IntervalSchedule.SECONDS)
+            elif notification == 6:
+                schedule = IntervalSchedule.objects.create(every=360, period=IntervalSchedule.SECONDS)
             else:
-                logger.warning(f'Schedule key {schedule_key} not found in beat_schedule.')
+                schedule = IntervalSchedule.objects.create(every=720, period=IntervalSchedule.SECONDS)
+
+            PeriodicTask.objects.create(
+                interval=schedule,
+                name=f'{user}_task_{city_name}',
+                task='weather.tasks.send_weather',
+                args=json.dumps([user.email, city_name])
+            )
 
             return subscribing_instance
         else:
@@ -45,6 +54,20 @@ class WeatherSerializer(serializers.ModelSerializer):
         instance.notification = validated_data.get('notification', instance.notification)
         instance.city_name = validated_data.get('city_name', instance.city_name)
         instance.save()
+
+        if instance.notification == 3:
+            schedule = IntervalSchedule.objects.create(every=180, period=IntervalSchedule.SECONDS)
+        elif instance.notification == 6:
+            schedule = IntervalSchedule.objects.create(every=360, period=IntervalSchedule.SECONDS)
+        else:
+            schedule = IntervalSchedule.objects.create(every=720, period=IntervalSchedule.SECONDS)
+
+        # Получаем периодическую задачу по имени пользователя и названию города
+        periodic_task = PeriodicTask.objects.get(name=f'{instance.user}_task_{instance.city_name}')
+
+        # Обновляем интервал у периодической задачи
+        periodic_task.interval = schedule
+        periodic_task.save()
         return instance
 
     def is_valid_city(self, city_name):

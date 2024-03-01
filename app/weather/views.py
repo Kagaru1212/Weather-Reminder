@@ -1,9 +1,11 @@
 import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
-from rest_framework import generics
+from django_celery_beat.models import PeriodicTask
+from rest_framework import generics, status
 from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .models import Subscribing
 from .serializers import WeatherSerializer
@@ -38,4 +40,24 @@ class WeatherApiUpdate(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         serializer.save()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Получаем периодическую задачу по имени пользователя и названию города
+        try:
+            periodic_task = PeriodicTask.objects.get(name=f'{instance.user}_task_{instance.city_name}')
+        except PeriodicTask.DoesNotExist:
+            periodic_task = None
+
+        # Если найдена периодическая задача, удаляем ее
+        if periodic_task:
+            periodic_task.delete()
+
+        # Удаляем подписку
+        instance.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 
