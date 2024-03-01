@@ -1,7 +1,7 @@
-from django.urls import path
-from . import views
+from rest_framework import routers
+from .views import SubscribingApiViewSet
 
-urlpatterns = [
-    path('api/v1/subscribing/', views.WeatherApiView.as_view()),
-    path('api/v1/subscribing/<int:pk>/', views.WeatherApiUpdate.as_view()),
-]
+router = routers.SimpleRouter()
+router.register(r'subscriptions', SubscribingApiViewSet, basename='subscriptions')
+
+urlpatterns = []

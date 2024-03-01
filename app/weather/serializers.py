@@ -25,7 +25,7 @@ class WeatherSerializer(serializers.ModelSerializer):
         city_name = validated_data.get('city_name')
         notification = int(validated_data.get('notification', ''))
 
-        # Проверка наличия города в стороннем API
+        # Checking the availability of a city in a third-party API
         if self.is_valid_city(city_name):
             subscribing_instance = Subscribing(user=user, **validated_data)
             subscribing_instance.save()
@@ -62,10 +62,10 @@ class WeatherSerializer(serializers.ModelSerializer):
         else:
             schedule = IntervalSchedule.objects.create(every=720, period=IntervalSchedule.SECONDS)
 
-        # Получаем периодическую задачу по имени пользователя и названию города
+        # Getting a periodic task by username and city name
         periodic_task = PeriodicTask.objects.get(name=f'{instance.user}_task_{instance.city_name}')
 
-        # Обновляем интервал у периодической задачи
+        # Updating the interval of a periodic task
         periodic_task.interval = schedule
         periodic_task.save()
         return instance
