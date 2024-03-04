@@ -11,7 +11,31 @@ services:
     ports:
       - 8000:8000
     depends_on:
-       - pgdb
+      - pgdb
+      - redis
+      - celery-worker
+      - celery-beat
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+
+  celery-worker:
+    build: ./app
+    env_file:
+      - .env.dev
+    command: celery -A WeatherReminder worker -l INFO
+    depends_on:
+      - redis
+
+  celery-beat:
+    build: ./app
+    env_file:
+      - .env.dev
+    command: celery -A WeatherReminder beat -l INFO -S django
+    depends_on:
+      - pgdb
 
   pgdb:
     image: postgres:latest

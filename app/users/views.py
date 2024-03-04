@@ -1,7 +1,5 @@
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
-
-from weather.models import Subscribing
 from .models import CustomUser
 from .serializers import UserSerializer
 
