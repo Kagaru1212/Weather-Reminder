@@ -5,10 +5,6 @@ from rest_framework import serializers
 
 from weather.models import Subscribing
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
-import logging
-
-
-logger = logging.getLogger(__name__)
 
 
 class WeatherSerializer(serializers.ModelSerializer):
@@ -29,8 +25,6 @@ class WeatherSerializer(serializers.ModelSerializer):
         if self.is_valid_city(city_name):
             subscribing_instance = Subscribing(user=user, **validated_data)
             subscribing_instance.save()
-
-            logger.info(f'Sending weather task for user {user.email} and city {city_name}')
 
             if notification == 3:
                 schedule = IntervalSchedule.objects.create(every=180, period=IntervalSchedule.SECONDS)

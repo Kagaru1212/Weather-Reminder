@@ -25,8 +25,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include(router.urls)),
     path('api/v1/', include('users.urls', namespace='users')),
+
+    # Endpoint for retrieving OpenAPI schema
     path('api/v1/schema/', SpectacularAPIView.as_view(), name='schema'),
-    # Optional UI:
+
+    # Optional UI for Swagger documentation
     path('api/v1/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/v1/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
