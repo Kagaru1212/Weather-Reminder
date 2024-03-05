@@ -45,8 +45,9 @@ class WeatherSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'city_name': 'City not found in the external API'})
 
     def update(self, instance, validated_data):
+        validated_data.pop('city_name', None)
+
         instance.notification = validated_data.get('notification', instance.notification)
-        instance.city_name = validated_data.get('city_name', instance.city_name)
         instance.save()
 
         if instance.notification == 3:
@@ -56,8 +57,10 @@ class WeatherSerializer(serializers.ModelSerializer):
         else:
             schedule = IntervalSchedule.objects.create(every=720, period=IntervalSchedule.SECONDS)
 
+        city_name = instance.city_name
+
         # Getting a periodic task by username and city name
-        periodic_task = PeriodicTask.objects.get(name=f'{instance.user}_task_{instance.city_name}')
+        periodic_task = PeriodicTask.objects.get(name=f'{instance.user}_task_{city_name}')
 
         # Updating the interval of a periodic task
         periodic_task.interval = schedule
