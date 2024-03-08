@@ -5,7 +5,7 @@ from drf_spectacular.types import OpenApiTypes
 
 
 from .models import Subscribing
-from .serializers import WeatherSerializer
+from .serializers import WeatherSerializer, WeatherUpdateSerializer
 
 
 class SubscribingApiViewSet(viewsets.ModelViewSet):
@@ -19,6 +19,11 @@ class SubscribingApiViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save()
 
+    def get_serializer_class(self):
+        if self.action == 'update':
+            return WeatherUpdateSerializer
+
+        return WeatherSerializer
 
     @extend_schema(
         description="Delete a specific subscription by ID",
@@ -61,7 +66,7 @@ class SubscribingApiViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         description="Update a specific subscription by ID",
-        request=WeatherSerializer,
+        request=WeatherUpdateSerializer,
         responses={200: WeatherSerializer()},
         parameters=[
             OpenApiParameter(name='id', description='Subscription id', required=True, type=OpenApiTypes.INT,
@@ -76,7 +81,7 @@ class SubscribingApiViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         description="Partial update of a specific subscription by ID",
-        request=WeatherSerializer,
+        request=WeatherUpdateSerializer,
         responses={200: WeatherSerializer()},
         parameters=[
             OpenApiParameter(name='id', description='Subscription id', type=OpenApiTypes.INT,

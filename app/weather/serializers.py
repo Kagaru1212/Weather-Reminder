@@ -45,8 +45,6 @@ class WeatherSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'city_name': 'City not found in the external API'})
 
     def update(self, instance, validated_data):
-        validated_data.pop('city_name', None)
-
         instance.notification = validated_data.get('notification', instance.notification)
         instance.save()
 
@@ -78,3 +76,9 @@ class WeatherSerializer(serializers.ModelSerializer):
         if value not in [3, 6, 12]:
             raise serializers.ValidationError("Notification value should be 3, 6, or 12")
         return value
+
+
+class WeatherUpdateSerializer(WeatherSerializer):
+    class Meta:
+        model = Subscribing
+        fields = ('user', 'notification')

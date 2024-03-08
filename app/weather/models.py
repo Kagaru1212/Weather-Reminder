@@ -12,6 +12,7 @@ class Subscribing(models.Model):
 
     objects = models.Manager()
 
+
 @receiver(pre_delete, sender=Subscribing)
 def delete_periodic_task(sender, instance, **kwargs):
     try:

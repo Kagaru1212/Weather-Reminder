@@ -1,10 +1,11 @@
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import CustomUser
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserUpdateSerializer
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
@@ -15,19 +16,10 @@ class UserRegistrationView(generics.CreateAPIView):
         description="Please register.",
         request=UserSerializer,
         responses={201: UserSerializer()},
-        parameters=[
-            OpenApiParameter(name='Username', description='Enter a username.',
-                             type=OpenApiTypes.STR),
-            OpenApiParameter(name='Email',
-                             description='Enter a email.',
-                             type=OpenApiTypes.STR),
-            OpenApiParameter(name='Password',
-                             description='Enter a password.',
-                             type=OpenApiTypes.STR),
-        ],
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
 
 class UserUpdate(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
@@ -35,6 +27,12 @@ class UserUpdate(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT' or 'PATCH':
+            return UserUpdateSerializer
+
+        return UserSerializer
 
     @extend_schema(
         description="Your data.",
@@ -45,28 +43,16 @@ class UserUpdate(generics.RetrieveUpdateAPIView):
 
     @extend_schema(
         description="Update your data (username or password)",
-        request=UserSerializer,
+        request=UserUpdateSerializer,
         responses={200: UserSerializer()},
-        parameters=[
-            OpenApiParameter(name='username',
-                             description='Enter a new username.', type=OpenApiTypes.STR),
-            OpenApiParameter(name='password',
-                             description='Enter a new password.', type=OpenApiTypes.STR),
-        ],
     )
     def put(self, request, *args, **kwargs):
         return super().put(request, *args, **kwargs)
 
     @extend_schema(
         description="Update your data (username or password)",
-        request=UserSerializer,
+        request=UserUpdateSerializer,
         responses={200: UserSerializer()},
-        parameters=[
-            OpenApiParameter(name='username',
-                             description='Enter a new username.', type=OpenApiTypes.STR),
-            OpenApiParameter(name='password',
-                             description='Enter a new password.', type=OpenApiTypes.STR),
-        ],
     )
     def patch(self, request, *args, **kwargs):
         return super().patch(request, *args, **kwargs)
@@ -74,12 +60,6 @@ class UserUpdate(generics.RetrieveUpdateAPIView):
 
 @extend_schema(
     description="Generate an access and refresh JSON web token pair by providing user credentials. Both tokens will work for one day",
-    parameters=[
-        OpenApiParameter(name='username',
-                         description='Enter a you username.', type=OpenApiTypes.STR),
-        OpenApiParameter(name='password',
-                         description='Enter a you password.', type=OpenApiTypes.STR),
-    ],
 )
 class CustomTokenObtainPairView(TokenObtainPairView):
     pass
