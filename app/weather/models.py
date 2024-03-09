@@ -1,6 +1,8 @@
-import redis
-from django.contrib.auth import get_user_model
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+from django_celery_beat.models import PeriodicTask
 from django.db import models
+from django.contrib.auth import get_user_model
 
 
 class Subscribing(models.Model):
@@ -10,7 +12,11 @@ class Subscribing(models.Model):
 
     objects = models.Manager()
 
-    def save_weather_to_redis(self, city_name, weather_data):
-        redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
-        key = f'city_weather:{city_name}'
-        redis_client.set(key, weather_data)
+
+@receiver(pre_delete, sender=Subscribing)
+def delete_periodic_task(sender, instance, **kwargs):
+    try:
+        periodic_task = PeriodicTask.objects.get(name=f'{instance.user}_task_{instance.city_name}')
+        periodic_task.delete()
+    except PeriodicTask.DoesNotExist:
+        pass

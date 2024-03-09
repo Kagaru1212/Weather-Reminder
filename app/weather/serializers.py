@@ -46,7 +46,6 @@ class WeatherSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.notification = validated_data.get('notification', instance.notification)
-        instance.city_name = validated_data.get('city_name', instance.city_name)
         instance.save()
 
         if instance.notification == 3:
@@ -56,8 +55,10 @@ class WeatherSerializer(serializers.ModelSerializer):
         else:
             schedule = IntervalSchedule.objects.create(every=720, period=IntervalSchedule.SECONDS)
 
+        city_name = instance.city_name
+
         # Getting a periodic task by username and city name
-        periodic_task = PeriodicTask.objects.get(name=f'{instance.user}_task_{instance.city_name}')
+        periodic_task = PeriodicTask.objects.get(name=f'{instance.user}_task_{city_name}')
 
         # Updating the interval of a periodic task
         periodic_task.interval = schedule
@@ -75,3 +76,9 @@ class WeatherSerializer(serializers.ModelSerializer):
         if value not in [3, 6, 12]:
             raise serializers.ValidationError("Notification value should be 3, 6, or 12")
         return value
+
+
+class WeatherUpdateSerializer(WeatherSerializer):
+    class Meta:
+        model = Subscribing
+        fields = ('user', 'notification')

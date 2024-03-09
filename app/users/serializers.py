@@ -28,3 +28,7 @@ class UserSerializer(serializers.ModelSerializer):
         if self.instance and self.instance.email != value:
             raise serializers.ValidationError("Изменение email запрещено.")
         return value
+
+
+class UserUpdateSerializer(UserSerializer):
+    email = serializers.CharField(max_length=255, read_only=True)

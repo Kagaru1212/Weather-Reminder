@@ -1,0 +1,77 @@
+services:
+  django:
+    build: ./app
+    env_file:
+      - .env.prod
+    command: >
+      bash -c "python manage.py makemigrations &&
+               python manage.py migrate &&
+               gunicorn WeatherReminder.wsgi:application --bind 0.0.0.0:8000"
+
+    expose:
+      - 8000
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+    depends_on:
+      - pgdb
+      - redis
+      - celery-worker
+      - celery-beat
+    networks:
+      - task-16-decompose-project
+
+  pgdb:
+    image: postgres:latest
+    env_file:
+      - .env.prod.db
+    ports:
+      - "5432:5432"
+    volumes:
+      - my_db:/var/lib/postgresql/data
+    networks:
+      - task-16-decompose-project
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+
+  celery-worker:
+    build: ./app
+    env_file:
+      - .env.prod
+    command: celery -A WeatherReminder worker -l INFO
+    depends_on:
+      - redis
+    networks:
+      - task-16-decompose-project
+
+  celery-beat:
+    build: ./app
+    env_file:
+      - .env.prod
+    command: celery -A WeatherReminder beat -l INFO -S django
+    depends_on:
+      - pgdb
+    networks:
+      - task-16-decompose-project
+
+  nginx:
+    build: ./nginx
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+    ports:
+      - "80:80"
+    depends_on:
+      - django
+    networks:
+      - task-16-decompose-project
+
+networks:
+  task-16-decompose-project:
+    driver: bridge
+
+volumes:
+  my_db:
+  static_volume:
+
